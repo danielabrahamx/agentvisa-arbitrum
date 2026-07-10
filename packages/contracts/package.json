@@ -1,0 +1,25 @@
+{
+  "name": "@agentvisa/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "hardhat build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "hardhat test",
+    "test:integration": "hardhat test --grep integration"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-node-test-runner": "3.0.17",
+    "@nomicfoundation/hardhat-viem": "3.0.9",
+    "@semaphore-protocol/contracts": "4.14.2",
+    "@semaphore-protocol/group": "4.14.2",
+    "@semaphore-protocol/identity": "4.14.2",
+    "@semaphore-protocol/proof": "4.14.2",
+    "@types/snarkjs": "0.7.9",
+    "@zk-kit/semaphore-artifacts": "4.13.0",
+    "hardhat": "3.9.1",
+    "viem": "2.54.2"
+  }
+}

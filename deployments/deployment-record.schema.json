@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentVisa Deployment Record",
+  "description": "Verified provenance for one synthetic-testnet contract deployment.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "chainId",
+    "contractName",
+    "address",
+    "bytecodeHash",
+    "source",
+    "constructorArguments",
+    "deployer",
+    "transactionHash",
+    "explorerUrl",
+    "verificationStatus"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "chainId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "contractName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "address": {
+      "$ref": "#/$defs/address"
+    },
+    "bytecodeHash": {
+      "$ref": "#/$defs/bytes32"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name", "version"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["npm", "git", "local"]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{40}$"
+        }
+      }
+    },
+    "constructorArguments": {
+      "type": "array",
+      "items": true
+    },
+    "deployer": {
+      "$ref": "#/$defs/address"
+    },
+    "transactionHash": {
+      "$ref": "#/$defs/bytes32"
+    },
+    "explorerUrl": {
+      "type": "string",
+      "pattern": "^https://[^\\s]+$"
+    },
+    "verificationStatus": {
+      "type": "string",
+      "enum": ["unverified", "pending", "verified", "failed"]
+    }
+  },
+  "$defs": {
+    "address": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{40}$"
+    },
+    "bytes32": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{64}$"
+    }
+  }
+}

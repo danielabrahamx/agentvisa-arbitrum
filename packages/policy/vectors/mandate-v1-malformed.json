@@ -1,0 +1,28 @@
+{
+  "cases": [
+    {
+      "name": "short-digest",
+      "value": "0x01",
+      "error": "digest must be exactly 32 bytes"
+    },
+    {
+      "name": "unsupported-mandate-version",
+      "value": 2,
+      "error": "unsupported Mandate version"
+    },
+    {
+      "name": "unsupported-scope-version",
+      "value": 2,
+      "error": "unsupported Scope version"
+    },
+    {
+      "name": "uint48-overflow",
+      "value": "281474976710656",
+      "error": "validUntil must fit uint48"
+    },
+    {
+      "name": "short-permission-digest",
+      "value": "0x01"
+    }
+  ]
+}
