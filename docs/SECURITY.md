@@ -1,205 +1,183 @@
 # Security Model
 
-**Status:** Required invariants and MVP threat model  
-**Scope:** Synthetic identities and test assets only
+**Status:** Required MVP invariants
 
-## Security objective
+**Scope:** Synthetic identities, application data, and rewards only
 
-A compromised or mistaken Agent must not exceed the exact permission approved by both an accepted Credential holder and the Smart Account Owner.
+## Objective
 
-The primary protected assets are:
+One accepted enrollment may issue at most one configured Credential, and one
+Credential may create at most one account for each Stable Application ID.
+Neither wallet changes nor concurrent requests may bypass those limits.
 
-- Smart Account funds.
-- Account ownership and recovery authority.
-- Operator privacy.
-- Credential integrity.
-- Mandate and Permission Digest integrity.
-- Revocation availability.
+## Trust model
 
-## Principal threats
+Trusted in the MVP:
 
-### Agent compromise
+- the configured synthetic Uniqueness Source key;
+- AgentVisa issuance and Semaphore group administration;
+- the Relying Party database, moderation, result, and eligibility decisions;
+- the Reward Authorizer key;
+- Arbitrum Sepolia consensus for confirmed claim state.
 
-The Agent may be manipulated by prompts, tools, model output, dependencies, or an attacker holding its Session Key.
+Validated at boundaries:
 
-Control: the Session Key has default-deny policies and never becomes an owner or recovery key.
+- browser payloads and commitments;
+- Enrollment Authorizations and signatures;
+- Semaphore proofs and public inputs;
+- Login Keys, sessions, usernames, and payout addresses;
+- timestamps, RPC responses, and EIP-712 claim data;
+- concurrent enrollment, registration, and claim submissions.
 
-### Credential-proof substitution
+## Principal threats and controls
 
-An attacker may reuse a valid proof with a different account, permission, session key, chain, or authorization contract.
+### Enrollment replay or substitution
 
-Control: every value is bound into a typed Mandate Digest and Scope. The contract recomputes both.
+An attacker may replay an authorization or replace its source, domain, schema,
+commitment, nonce, or expiry.
 
-### Account takeover through credential proof
+Control: sign every field, enforce source policy, reject expiry, and atomically
+consume a unique `(sourceId, nonce)`.
 
-Any accepted Semaphore member could target another person's account if the proof replaced account-owner authorization.
+### Multiple credentials from one source identity
 
-Control: normal Safe owner approval remains mandatory. A Credential Proof is an additional requirement, never an owner signature.
+Concurrent or repeated enrollment may bind one accepted source event to
+multiple Semaphore identities.
 
-### Replay
+Control: the source adapter exposes a stable opaque subject or nullifier, the
+issuer binds the commitment, and durable uniqueness constraints make one
+enrollment authoritative.
 
-An attacker may replay proof installation or a signed agent action.
+### Registration replay or wallet switching
 
-Control: Semaphore consumes a scope-specific installation nullifier. Smart Account and ERC-4337 nonces protect routine actions. EIP-712 domains include chain and verifying contract.
+A holder may retry with another wallet, username, or request to evade an
+existing application account or ban.
 
-### Policy bypass
+Control: Semaphore scope contains only the Stable Application ID. Proof
+verification, nullifier insertion, and account creation are one transaction
+with a unique `(stableApplicationId, registrationNullifier)` constraint.
 
-An allowed target or selector may contain parameters that permit a larger or different action than intended.
+### Cross-application correlation
 
-Control: the first policy supports one known target and selector with explicit parameter decoding. Unknown or malformed calldata reverts.
+A global scope, identifier, wallet, username, analytics ID, or logs may link a
+holder across applications.
 
-### Module privilege escalation
+Control: derive a distinct nullifier per Stable Application ID; never expose
+the enrollment subject or identity commitment to Relying Parties; redact logs.
+The MVP does not claim network- or transaction-graph privacy.
 
-A session module, policy, fallback handler, batch executor, or delegatecall target could mutate account ownership or bypass checks.
+### Login-key substitution
 
-Control: pin audited dependencies, deny administrative functions, disable wildcards and unsafe execution modes, and test exact deployed bytecode.
+An intercepted proof could create an account controlled by another Login Key.
 
-### Revocation failure
+Control: the proof message binds the Stable Application ID and Login Key.
+Validate canonical key encoding before proof verification.
 
-A compromised Session Key or revoked Credential may remain usable.
+### Moderation bypass
 
-Control: Account Owner revocation is immediate and independent. Credential Authorization Records are short-lived. Group removal prevents new authorization after historical-root expiry.
+Changing payout or login wallets could reset account state.
 
-### Privacy correlation
+Control: moderation belongs to the Application Account keyed by the consumed
+Registration Nullifier, not to a wallet or username.
 
-Public account, proof message field, scope, nullifier, permission, timing, and action patterns may be correlated.
+### Credential loss and reissuance
 
-Control: no PII or universal identifier is published, nullifiers are scope-specific, and relaying avoids requiring the Operator's ordinary wallet as fee payer. The system does not claim transaction-graph privacy.
+Issuing membership to a replacement Semaphore identity creates new
+application nullifiers and may evade old bans.
 
-### Issuer compromise
+Control: the MVP has no recovery or reissuance. Production recovery is blocked
+until continuity across existing Application Accounts is designed.
 
-A compromised group administrator can add unauthorized commitments, remove valid members, or revoke known Authorization Records.
+### Reward forgery and replay
 
-Control: synthetic test issuer for MVP. Before production, use a Safe-controlled issuer, documented incident response, monitoring, and bounded authorization lifetimes.
+An attacker may alter result, application, recipient, amount, chain, contract,
+expiry, claim ID, or signer.
 
-### Infrastructure failure
+Control: bind every value in EIP-712, pin the authorizer, reject expiry, consume
+claim IDs once, and update state before external interaction.
 
-RPC, bundler, paymaster, or sequencer services may censor, delay, fail, or return false data.
+### Issuer or platform compromise
 
-Control: authorization and revocation support direct transaction submission. Do not trust provider responses without on-chain confirmation. Do not make bridge operations part of MVP.
+The issuer can add unauthorized members; a platform can falsify moderation or
+results; an authorizer can sign invalid rewards.
+
+Control: disclose these trust assumptions. Use synthetic data and points only.
+Production requires separated duties, hardened keys, monitoring, and incident
+response.
 
 ## Required invariants
 
-### Ownership
+Enrollment:
 
-- A Credential Proof cannot add, remove, or replace an Account Owner.
-- A Session Key cannot install another Session Key.
-- A Session Key cannot change modules, fallback handlers, guards, recovery, or threshold.
-- The Agent never receives owner or recovery secrets.
+- the identity secret never leaves the browser;
+- every accepted authorization has a valid configured source signature;
+- source, uniqueness domain, schema, assurance, commitment, nonce, and expiry
+  cannot be substituted;
+- each source nonce and accepted opaque subject is consumed at most once;
+- concurrent duplicates produce one success and deterministic duplicate
+  responses.
 
-### Authorization
+Credential proofs:
 
-- Every active session has a matching owner-approved Permission Digest.
-- Every AgentVisa-protected session has a matching active Authorization Record.
-- Authorization Record account, permission, chain, and contract cannot be substituted.
-- Authorization lifetime never exceeds the configured maximum.
+- standard pinned Semaphore v4 packages are used unchanged;
+- group, root, message, and scope are validated;
+- the message binds Stable Application ID and Login Key;
+- the scope binds only the intended Stable Application ID and versioned domain;
+- no universal or cross-application nullifier exists;
+- historical-root behavior is explicit and tested.
 
-### Proofs
+Application accounts:
 
-- Semaphore group ID and contract are pinned.
-- Proof message equals the recomputed Mandate Field.
-- Proof scope equals the recomputed Scope Field.
-- Each installation nullifier is consumed once.
-- Historical-root behavior is explicitly tested.
+- proof verification, nullifier insertion, and account creation are atomic;
+- `(stableApplicationId, registrationNullifier)` is unique in durable state;
+- routine activity does not require repeated personhood proofs;
+- wallet or username changes cannot create another account;
+- bans and sessions are application-local;
+- games never receive source nullifiers or identity commitments.
 
-### Policies
+Reward claims:
 
-- Default outcome is deny.
-- Only one exact target and selector are accepted in v1.
-- Calldata shorter than four bytes is rejected.
-- Malformed or non-canonical parameters are rejected.
-- Per-action and cumulative limits cannot overflow.
-- Cumulative state updates before external execution and rolls back if execution fails.
-- Expired or revoked sessions cannot execute.
+- only the configured signer can authorize a claim;
+- chain, contract, application, result, claim ID, recipient, amount, and expiry
+  are bound;
+- each claim ID succeeds at most once;
+- wrong signer, recipient, chain, contract, application, result, amount, or
+  expiry fails;
+- no World or Semaphore identifier is stored on-chain;
+- rewards are synthetic and carry no real value.
 
-### Execution
+Privacy:
 
-- No arbitrary delegatecall.
-- No wildcard target or selector.
-- No arbitrary batch or nested call.
-- No native value.
-- No fallback authorization.
-- No approval or permit path.
-- No external callback during credential-policy initialization.
+- no PII, biometric data, liveness artifact, source evidence, raw proof,
+  identity secret, or cross-application mapping is logged or stored on-chain;
+- operator and audit views expose application-scoped pseudonyms only;
+- public payout correlation is disclosed.
 
-### Privacy
+## Required adversarial tests
 
-- No name, email, liveness artifact, payment record, legal document, biometric hash, or identity-to-account mapping is stored on-chain.
-- No universal nullifier or stable cross-application Operator identifier exists.
-- Logs contain only values required for auditability and integration.
-
-## MVP adversarial tests
-
-### Credential authorization
-
-- Valid proof and matching Mandate succeeds once.
-- Replayed proof fails.
-- Wrong group, root, message, scope, chain, account, authorization contract, Permission Digest, Session Key, authorization ID, or time window fails.
-- Expired historical root fails according to configured duration.
-- Removed member cannot create authorization after root expiry.
-- Authorization exceeding maximum lifetime fails.
-
-### Owner authorization
-
-- Credential proof without owner signature cannot enable a session.
-- Owner signature without credential authorization cannot enable the protected session.
-- Different owner-approved permission with the same proof fails.
-- Signature from Session Key cannot enable or modify permissions.
-
-### Session execution
-
-- Correct Session Key, target, selector, parameters, and limits succeeds.
-- Wrong signer, target, selector, asset, recipient, or account fails.
-- Empty, short, malformed, appended, and non-canonical calldata fails.
-- Amount above per-action limit fails.
-- Several allowed actions above cumulative limit fail.
-- Exact boundary amounts behave as specified.
-- Expired, revoked, and uninstalled sessions fail.
-- Reentrant target cannot exceed limits or reuse state.
-
-### Privilege escalation
-
-- Session cannot call Safe ownership, module, guard, fallback, threshold, recovery, or delegatecall paths.
-- Session cannot use batch execution to hide a forbidden call.
-- Session cannot install a new policy or validator.
-- Session cannot approve token spending or grant Permit2 authority.
-
-### Availability
-
-- Owner can revoke directly without bundler or paymaster.
-- A failed external action does not consume cumulative allowance unless the whole operation succeeds.
-- Provider failure does not create a false local success state.
+- valid enrollment succeeds once;
+- replayed, expired, wrong-source, wrong-domain, wrong-schema, wrong-signature,
+  and substituted-commitment enrollment fails;
+- racing enrollment requests admit one commitment;
+- valid application registration succeeds once;
+- replay, wrong group, root, message, scope, Login Key, or Stable Application ID
+  fails;
+- changing wallet or username produces the same Registration Nullifier;
+- racing registrations create one Application Account;
+- a banned account cannot re-register or receive a reward;
+- valid Reward Authorization succeeds once;
+- replay, expiry, signer substitution, recipient substitution, wrong chain,
+  wrong contract, wrong application, wrong result, and changed amount fail;
+- provider failure cannot create false confirmed state.
 
 ## Dependency and deployment controls
 
-- Pin exact package and contract-source versions.
-- Record dependency licences and audits.
-- Exclude releases younger than seven days unless explicitly approved.
-- Commit lockfiles and verify clean reproducible installs.
-- Verify deployed bytecode against recorded build artifacts.
-- Verify source on Blockscout.
-- Never load deployer or owner keys from tracked files.
-- Use synthetic keys for tests and documented secret injection for deployment.
+- pin security-sensitive dependencies and keep the lockfile;
+- use releases at least seven days old unless explicitly justified;
+- map licences, maintenance, audits, and exact source provenance;
+- verify deployed bytecode and transaction receipts;
+- keep signing keys out of tracked files, browser bundles, and logs;
+- run formatting, lint, type checking, builds, tests, integration tests, and
+  dependency audit before claiming completion.
 
-## Security gates
-
-Before Robinhood testnet deployment:
-
-- Unit, integration, negative, fuzz, and cross-language vector tests pass.
-- Static analysis reports no unresolved high or critical findings.
-- Dependency audit is reviewed.
-- Threat model matches implemented features.
-- Deployment script is tested against a fresh local chain.
-
-Before any mainnet deployment:
-
-- Explicit approval is recorded.
-- External review or audit is complete.
-- Issuer and Account Owner key management are documented.
-- Emergency revocation is rehearsed.
-- Monitoring and incident response are operational.
-- No production PII or credential evidence enters public state.
-
-## Reporting
-
-Do not publish exploitable vulnerabilities in public issues. Until a dedicated security contact is established, report privately to the repository owner.
+No production identity, mainnet deployment, or real-value reward is authorized.

@@ -1,7 +1,12 @@
 # ADR-0003: Evaluate Safe, ERC-7579, and Smart Sessions before custom account code
 
-**Status:** Proposed  
+**Status:** Rejected for the active MVP by ADR-0006
+
 **Date:** 2026-07-10
+
+The gaming-platform MVP does not delegate smart-account authority. Safe,
+ERC-7579, Smart Sessions, and Session Keys are outside its product boundary.
+This file remains only as history of the earlier direction.
 
 ## Context
 

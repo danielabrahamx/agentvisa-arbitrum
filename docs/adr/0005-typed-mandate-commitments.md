@@ -1,7 +1,12 @@
 # ADR-0005: Use fixed typed Mandate commitments and golden vectors
 
-**Status:** Accepted  
+**Status:** Superseded by ADR-0006
+
 **Date:** 2026-07-10
+
+The implemented vectors remain valid historical test material, but MandateV1
+and the Smart Sessions Permission Digest are not part of the active
+gaming-platform MVP.
 
 ## Context
 

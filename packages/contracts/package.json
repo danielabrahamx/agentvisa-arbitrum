@@ -8,11 +8,18 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "hardhat test",
-    "test:integration": "hardhat test --grep integration"
+    "test:integration": "hardhat test --grep integration",
+    "deploy:arbitrum-sepolia": "hardhat run scripts/deploy-game-reward-claim.ts --network arbitrumSepolia",
+    "claim:arbitrum-sepolia": "hardhat run scripts/blair-claim-sepolia.ts --network arbitrumSepolia"
   },
   "devDependencies": {
+    "@account-abstraction/contracts": "0.7.0",
+    "@agentvisa/policy": "workspace:*",
     "@nomicfoundation/hardhat-node-test-runner": "3.0.17",
     "@nomicfoundation/hardhat-viem": "3.0.9",
+    "@openzeppelin/contracts": "5.1.0",
+    "@safe-global/safe-4337": "0.3.0-1",
+    "@safe-global/safe-contracts": "1.4.1-2",
     "@semaphore-protocol/contracts": "4.14.2",
     "@semaphore-protocol/group": "4.14.2",
     "@semaphore-protocol/identity": "4.14.2",

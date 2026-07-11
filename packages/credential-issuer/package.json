@@ -1,0 +1,23 @@
+{
+  "name": "@agentvisa/credential-issuer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agentvisa/policy": "workspace:*",
+    "@semaphore-protocol/group": "4.14.2",
+    "viem": "2.54.2"
+  }
+}

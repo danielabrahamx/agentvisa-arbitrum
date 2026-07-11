@@ -1,0 +1,46 @@
+{
+  "cases": [
+    {
+      "name": "unsupported-version",
+      "field": "version",
+      "value": 2,
+      "error": "unsupported Reward Authorization version"
+    },
+    {
+      "name": "short-stable-application-id",
+      "field": "stableApplicationId",
+      "value": "0x01",
+      "error": "stableApplicationId must be exactly 32 bytes"
+    },
+    {
+      "name": "zero-result-id",
+      "field": "resultId",
+      "value": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "error": "resultId must not be zero"
+    },
+    {
+      "name": "zero-claim-id",
+      "field": "claimId",
+      "value": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "error": "claimId must not be zero"
+    },
+    {
+      "name": "zero-recipient",
+      "field": "recipient",
+      "value": "0x0000000000000000000000000000000000000000",
+      "error": "recipient must not be zero"
+    },
+    {
+      "name": "short-recipient",
+      "field": "recipient",
+      "value": "0x01",
+      "error": "recipient must be a 20-byte address"
+    },
+    {
+      "name": "uint64-expiry-overflow",
+      "field": "expiresAt",
+      "value": "18446744073709551616",
+      "error": "expiresAt must fit uint64"
+    }
+  ]
+}

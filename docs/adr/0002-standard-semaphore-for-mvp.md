@@ -1,7 +1,12 @@
 # ADR-0002: Use standard Semaphore v4 for MVP credential proofs
 
-**Status:** Accepted  
+**Status:** Superseded by ADR-0006
+
 **Date:** 2026-07-10
+
+ADR-0006 retains standard Semaphore v4 but changes the proof message, scope,
+nullifier consumer, and target chain responsibilities for the gaming-platform
+MVP.
 
 ## Context
 

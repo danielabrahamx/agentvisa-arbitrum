@@ -1,105 +1,121 @@
 # Domain Context
 
-This file defines the product language. Use these terms consistently in code, tests, documentation, and discussion.
+This file defines canonical product language for code, tests, and documentation.
+
+## Product boundary
+
+AgentVisa issues a reusable, privacy-preserving Credential after a configured
+Uniqueness Source authorizes enrollment. A Relying Party presents one
+application-specific registration challenge, verifies one Credential Proof,
+and creates its own application account.
+
+The first Relying Party is a gaming platform. The interfaces remain
+platform-agnostic: no credential, scope, account, or reward primitive is tied
+to one game vendor.
 
 ## Core concepts
 
-### Operator
+### Credential Holder
 
-The human or organization responsible for an agent. An Operator may hold credentials issued after an external verification process.
+The person controlling a local Semaphore identity. The holder is not
+automatically KYC-approved, legally identified, or free from automation. The
+Credential means only what its source, schema, assurance, and issuance policy
+state.
 
-An Operator is not automatically a legally identified or KYC-approved person. The meaning depends on the credential issuer and schema.
+### Uniqueness Source
 
-### Account Owner
+An external system accepted by a Credential Issuer for enrollment. The MVP
+uses a clearly synthetic source and may add World ID staging through an
+adapter. A source defines its uniqueness domain; it does not prove every
+possible meaning of “one human.”
 
-A signer or owner set that retains ultimate control and recovery authority over a Smart Account.
+### Enrollment Authorization
 
-The Account Owner authorizes installation and revocation of Agent Sessions. The Agent never receives the owner or recovery key.
-
-### Agent
-
-Software that proposes or submits actions autonomously. An Agent is not assumed to be safe, correct, legally responsible, or independent from its Operator.
-
-### Session Key
-
-A dedicated key held by an Agent. It can act only through an installed Mandate and expires or can be revoked independently of the Account Owner.
-
-### Smart Account
-
-The on-chain account that holds assets and enforces Mandates. The MVP targets a Safe-compatible modular account rather than an externally owned account.
-
-### Mandate
-
-A typed, owner-approved authorization for one Session Key. A Mandate defines the account, permission identifier, target, function, asset or action class, amount limits, validity window, and unique authorization identifier.
-
-A proof can bind a Mandate. Enforcement is performed by smart-account policies, not by the proof itself.
-
-### Permission Digest
-
-The canonical EIP-712 or module-native digest of the exact permission the Account Owner approves. The Operator proof must bind this digest so the credential and wallet authorization cannot be substituted independently.
-
-### Credential
-
-A claim issued by a trusted Credential Issuer to an Operator. The MVP credential is anonymous membership in an AgentVisa-approved Semaphore group.
-
-Future credentials may represent specific attributes, but only according to the issuer's schema and verification process.
+A short-lived, signed authorization binding source, uniqueness domain, opaque
+subject, Credential schema, assurance, identity commitment, nonce, and expiry.
+It is consumed exactly once. It is not itself a reusable Credential.
 
 ### Credential Issuer
 
-The party responsible for verifying and issuing a Credential. AgentVisa is the initial issuer for approved-operator membership. AgentVisa must not claim regulated attributes that require another authorized verifier.
+The service that validates an Enrollment Authorization and admits the bound
+identity commitment to a Semaphore group. AgentVisa is the synthetic MVP
+issuer. Issuance remains trusted and does not become decentralized merely
+because proofs or rewards use a blockchain.
 
-### Credential Proof
+### Credential
 
-A privacy-preserving presentation showing that an Operator holds an acceptable Credential and authorized a particular Mandate. The MVP uses a Semaphore BN254 Groth16 membership proof.
-
-### Authorization Record
-
-Short-lived on-chain state showing that a Credential Proof was validated for a specific account and Permission Digest. It does not replace the Account Owner's signature.
-
-### Policy
-
-An on-chain rule applied to Session Key actions. Policies enforce targets, function selectors, amounts, cumulative usage, time windows, and other constraints.
-
-### Beneficial Owner
-
-The person or entity legally entitled to an asset or investment. An Agent is not the Beneficial Owner. A regulated intermediary may still need to identify and retain records about the Beneficial Owner.
-
-### Eligibility Credential
-
-A future Credential asserting that an Operator satisfies a specific predicate, such as a jurisdiction, licence, organization role, or accredited-investor status.
-
-Eligibility is issuer-specific, schema-specific, time-sensitive, and often offering-specific. Portability is never assumed.
+Anonymous membership in a configured AgentVisa Semaphore group. The identity
+secret remains in the holder's browser. Games and other Relying Parties never
+receive the enrollment authorization or source nullifier.
 
 ### Relying Party
 
-A wallet, protocol, issuer, broker, platform, or contract that decides whether to accept a Credential Proof or permit an action.
+An application that accepts a Credential Proof under an explicit policy. The
+first Relying Party is a gaming platform; each game is a separate application
+scope.
 
-### Scope
+### Stable Application ID
 
-The public Semaphore context used to derive a one-time nullifier. MVP Scope includes the chain, account, AgentVisa authorization contract, Permission Digest, and unique authorization identifier.
+An immutable identifier assigned by the Relying Party. For gaming, this is the
+Stable Game ID. It must not include wallet, username, season, or registration
+attempt.
 
-### Nullifier
+### Credential Proof
 
-A scope-specific public value produced by Semaphore. It prevents reuse within that Scope without revealing the Operator. A universal or cross-application nullifier is forbidden.
+A standard Semaphore v4 membership proof whose message binds the application
+login key and whose scope binds the Stable Application ID.
 
-## Trust statements
+### Registration Nullifier
 
-The MVP proves all of the following:
+The application-scoped Semaphore nullifier. It allows one application account
+per Credential while preventing cross-application correlation. Universal
+nullifiers are forbidden.
 
-- Some current member of an accepted AgentVisa group created the Credential Proof.
-- The proof binds a specific account and Permission Digest.
-- The Account Owner separately approved the same permission through the smart-account authorization flow.
-- The Session Key action satisfies installed policies.
+### Application Account
+
+The Relying Party's pseudonymous account created after successful proof
+verification and atomic nullifier consumption. For gaming this is the Game
+Account. Routine login, play, moderation, and reward eligibility use this
+account and do not require repeated personhood proofs.
+
+### Login Key
+
+A holder-controlled application authentication key bound by the registration
+proof. It is distinct from the Semaphore identity secret and payout wallet.
+
+### Payout Address
+
+An address selected to receive a public reward claim. It is not evidence of
+personhood and may change without creating another Application Account.
+
+### Reward Authorization
+
+A short-lived EIP-712 authorization issued for an eligible application result.
+It binds chain, contract, application, result, claim ID, recipient, amount, and
+expiry. The claim contract consumes each claim ID once.
+
+## MVP trust statements
+
+The MVP proves:
+
+- an accepted source authorized one enrollment under its stated uniqueness
+  domain;
+- AgentVisa issued one Semaphore Credential for the bound commitment;
+- a current group member registered once for a Stable Application ID;
+- the registration proof binds the application's Login Key;
+- a trusted application authorizer approved a narrow synthetic reward claim.
 
 The MVP does not prove:
 
-- The Agent is safe or competent.
-- The Operator and Account Owner cannot collude with another credential holder.
-- The Operator completed legal KYC unless a qualified issuer explicitly says so.
-- The Agent is the legal or beneficial owner of assets.
-- A regulated intermediary can avoid its own recordkeeping duties.
-- The entire transaction graph is private.
+- a World-native third-party credential was issued;
+- the holder is legally identified, KYC-approved, or not using automation;
+- credentials cannot be lent or multiple accepted source identities obtained;
+- recovery or reissuance preserves bans;
+- the payout wallet identifies the Credential Holder;
+- issuance, moderation, game results, or reward authorization are decentralized.
 
 ## Product sentence
 
-AgentVisa lets people automate self-custodial accounts without giving AI agents unrestricted authority, then lets those agents privately prove owner attributes when a trusted issuer and relying party support them.
+AgentVisa lets platforms admit one pseudonymous account per accepted
+credential, enforce application-local continuity, and issue narrow rewards
+without exposing a global identity across applications.

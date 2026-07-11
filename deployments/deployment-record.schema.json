@@ -13,6 +13,7 @@
     "source",
     "constructorArguments",
     "deployer",
+    "authorizer",
     "transactionHash",
     "explorerUrl",
     "verificationStatus"
@@ -64,6 +65,10 @@
     },
     "deployer": {
       "$ref": "#/$defs/address"
+    },
+    "authorizer": {
+      "$ref": "#/$defs/address",
+      "description": "Trusted Reward Authorization signer bound in the constructor."
     },
     "transactionHash": {
       "$ref": "#/$defs/bytes32"

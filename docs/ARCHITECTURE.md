@@ -1,303 +1,240 @@
 # Architecture
 
-**Status:** Proposed architecture with explicit foundation gates  
-**Target:** Robinhood Chain testnet, chain ID 46630
+**Status:** Accepted MVP architecture
 
-## System objective
+**First integration:** Gaming platform
 
-Allow an approved Operator to authorize an Agent Session Key for a narrowly constrained Smart Account permission without exposing the Operator's identity on-chain.
+**On-chain target:** Arbitrum Sepolia, chain ID `421614`, for synthetic reward
+claims only
 
-The system combines two independent authorizations:
+## Objective
 
-1. Credential authorization: a Semaphore proof shows that an accepted group member bound a specific Permission Digest to the account.
-2. Account authorization: the Account Owner approves the same permission through the account's normal signature path.
+Issue a reusable AgentVisa Semaphore Credential after an approved enrollment,
+then let an application create one pseudonymous account per Credential without
+learning a global person identifier.
 
-Neither authorization is sufficient alone.
+The first demo uses games, bans, wins, and rewards. Core enrollment,
+registration, account, and claim boundaries use platform-agnostic types.
 
-## Trust model
-
-### Trusted
-
-- AgentVisa or a future Credential Issuer verifies eligibility and administers its credential group.
-- The Account Owner controls Safe ownership and recovery.
-- Accepted Semaphore contracts implement the audited v4 protocol.
-- Accepted Smart Account and session modules implement their documented behavior.
-
-### Untrusted
-
-- The Agent and its Session Key.
-- Prompts, tools, models, relayers, bundlers, paymasters, RPC providers, and transaction submitters.
-- All calldata, policy input, proofs, signatures, deployment records, and network responses until validated.
-
-### Not solved
-
-- Credential lending or collusion between two humans.
-- Privacy of the full transaction graph.
-- Legal identity, KYC, AML, suitability, or beneficial-ownership duties unless a qualified issuer and relying party explicitly support them.
-- Safety or correctness of the Agent's reasoning.
-
-## Proposed component model
+## System boundary
 
 ```text
-Operator wallet
-  - Semaphore identity secret
-  - generates Credential Proof
+Uniqueness Source adapter
+  -> signed Enrollment Authorization
 
-AgentVisa Semaphore group
-  - approved identity commitments
-  - group administrator controlled by AgentVisa test issuer
+Credential Holder browser
+  -> local Semaphore identity secret
+  -> identity commitment only
 
-AgentVisaAuthorization
-  - validates Semaphore proof
-  - binds proof message to Mandate Digest
-  - consumes scoped nullifier
-  - stores short-lived Authorization Record
-  - supports explicit record revocation
+AgentVisa Credential Issuer
+  -> validates and consumes Enrollment Authorization
+  -> admits commitment to AgentVisa Semaphore group
 
-Safe Smart Account
-  - owner and recovery authority
-  - normal owner signature remains mandatory
-  - Safe7579 adapter, subject to spike
+Relying Party
+  -> requests application-scoped Credential Proof
+  -> verifies proof and atomically consumes Registration Nullifier
+  -> creates and operates Application Account
 
-Smart Sessions
-  - installs Session Key permission
-  - standard target, selector, amount, cumulative, and time policies
+Reward Authorizer
+  -> signs one narrow EIP-712 claim for an eligible result
 
-AgentVisaCredentialPolicy
-  - mandatory Smart Sessions policy
-  - checks matching active Authorization Record
-
-Agent
-  - holds Session Key only
-  - signs routine actions
-
-Bundler or direct submitter
-  - transports signed operations
-  - has no authorization power
+Arbitrum Sepolia claim contract
+  -> validates authorization and consumes claim ID
+  -> records synthetic points or emits a claim event
 ```
 
-## Authorization flow
+## Deployment surfaces (Phase 6 / 6b)
 
-### 1. Identity approval
+Phase 6b is complete:
 
-1. Operator creates a Semaphore v4 identity locally.
-2. Only the identity commitment is submitted to the test issuer.
-3. AgentVisa approves the synthetic test Operator.
-4. The group administrator adds the commitment to the AgentVisa group.
+- **Demo UI / issuer / game account services** run as a Node process with
+  SQLite (local or public HTTPS via tunnel). Enrollment uses a synthetic
+  Uniqueness Source. These steps do not send transactions.
+- **Reward claims** use the deployed `GameRewardClaim` on Arbitrum Sepolia
+  `421614`. The browser wallet (MetaMask/Rabby) submits `claim`; the server
+  signs EIP-712 Reward Authorizations only. Public demo URL is recorded in
+  `HANDOFF.md` / `README.md`.
 
-No identity secret enters this repository's server or contracts.
+World verification infrastructure is not deployed on-chain for this MVP.
 
-### 2. Permission construction
+## Enrollment
 
-1. The account integration constructs one Smart Sessions permission.
-2. The permission contains one Session Key and narrowly scoped policies.
-3. Smart Sessions produces the canonical Permission Digest.
-4. The Account Owner reviews and signs the normal enable object.
+1. The browser creates a Semaphore v4 identity locally.
+2. A source adapter produces an Enrollment Authorization bound to the identity
+   commitment.
+3. The issuer validates the signature, source policy, uniqueness domain,
+   schema, assurance, expiry, commitment binding, and nonce.
+4. In one transaction or idempotent state machine, the issuer consumes the
+   source nonce and admits the commitment to the configured Semaphore group.
+5. The browser retains the identity secret; only the commitment enters issuer
+   state.
 
-The project must use the module's exact canonical digest. Reconstructing an approximation is forbidden.
+The MVP starts with a synthetic source adapter. A World staging adapter may be
+added without changing issuance semantics. It must keep a fixed enrollment
+action and uniquely consume the World nullifier. This is not a World-native
+AgentVisa credential.
 
-### 3. Credential authorization
+## Application registration
 
-The Operator constructs `MandateV1`:
-
-```text
-version
-chainId
-account
-agentVisaAuthorization
-semaphoreGroupId
-permissionDigest
-sessionKey
-validAfter
-validUntil
-authorizationId
-```
-
-The Mandate Digest is a domain-separated typed hash. The Semaphore message is the Mandate Digest mapped into the BN254 scalar field.
-
-The Semaphore scope binds:
+For each Stable Application ID:
 
 ```text
-version
-chainId
-account
-agentVisaAuthorization
-semaphoreGroupId
-permissionDigest
-authorizationId
-```
-
-`AgentVisaAuthorization.authorizeMandate`:
-
-1. Recomputes Mandate Digest and Scope Field.
-2. Checks chain, contract, group, time, and lifetime limits.
-3. Requires proof message and scope to match.
-4. Calls the pinned Semaphore contract to validate the proof and consume the nullifier.
-5. Stores an Authorization Record keyed by account and Permission Digest.
-
-### 4. Session enablement
-
-The Account Owner enables the same permission through Safe and Smart Sessions.
-
-`AgentVisaCredentialPolicy` is mandatory. It receives or derives the Permission Digest and checks that the Authorization Record:
-
-- Exists for the same account.
-- Matches the permission.
-- Has started.
-- Has not expired.
-- Has not been revoked.
-
-The exact policy hook is an architecture gate. It must be proven against the current Smart Sessions implementation before this design is accepted.
-
-### 5. Agent execution
-
-1. Agent signs an operation with the Session Key.
-2. Bundler or submitter transports it.
-3. Smart Sessions validates the Session Key.
-4. AgentVisaCredentialPolicy validates current credential authorization.
-5. Standard action policies validate target, selector, amount, cumulative use, and time.
-6. Safe executes only if every check passes.
-
-### 6. Revocation and expiry
-
-Account safety revocation:
-
-- Account Owner immediately revokes the permission or uninstalls the session module.
-- This path must work without AgentVisa, a bundler, or a paymaster.
-
-Credential authorization revocation:
-
-- Authorization Records have short maximum lifetimes.
-- AgentVisa may revoke a known Authorization Record.
-- Removing a group member prevents new proofs after accepted historical roots expire.
-
-Privacy limitation:
-
-Semaphore does not let the issuer discover every anonymous Authorization Record created by a removed identity. Existing records may remain valid until their own expiry unless their identifier is known. The MVP must use short lifetimes and state this honestly.
-
-## Typed hashing
-
-### Mandate Digest
-
-Use a fixed-size `MandateV1` struct. Do not include dynamic arrays in v1.
-
-```text
-MANDATE_TYPEHASH = keccak256(
-  "MandateV1(uint8 version,uint256 chainId,address account,address authorization,uint256 groupId,bytes32 permissionDigest,address sessionKey,uint48 validAfter,uint48 validUntil,bytes32 authorizationId)"
+scope = H("agentvisa.application-registration.v1", stableApplicationId)
+message = H(
+  "agentvisa.application-account.v1",
+  stableApplicationId,
+  loginPublicKey
 )
 ```
 
-The exact digest construction is specified and tested in the policy package and Solidity library.
+The exact typed encoding and BN254 field conversion must be defined once and
+covered by TypeScript golden vectors. A Stable Game ID is the gaming form of
+the Stable Application ID.
 
-### Hash to BN254 field
+Registration:
 
-One shared function maps a digest to a Semaphore field:
+1. The browser generates a Credential Proof from its local identity and the
+   accepted group.
+2. The Relying Party validates all public inputs and verifies the standard
+   Semaphore proof.
+3. Proof verification, insertion of the Registration Nullifier, and creation
+   of the Application Account occur atomically.
+4. A database uniqueness constraint on
+   `(stableApplicationId, registrationNullifier)` is authoritative.
+5. A duplicate resolves to the existing account state. For a banned game
+   account it returns an application-local banned response.
 
-```text
-field = uint256(digest) mod SNARK_SCALAR_FIELD
-```
+Wallet, username, season, payout address, and registration attempt are excluded
+from scope. Changing them cannot create a second account.
 
-Requirements:
+## Account lifecycle
 
-- Pin the exact scalar-field constant from the accepted Semaphore version.
-- Domain-separate Mandate and Scope hashes.
-- Publish TypeScript and Solidity golden vectors.
-- Reject zero if the underlying protocol or integration requires a non-zero value.
-- Never use truncation, floating-point conversion, packed dynamic values, or JSON serialization.
+After registration, the Relying Party authenticates the Application Account
+with its Login Key or an opaque application session. It does not request
+another Semaphore or World proof for routine activity.
 
-## MVP policy surface
+For the gaming demo:
 
-The first end-to-end permission supports:
+- play and win events belong to the Game Account;
+- a ban invalidates game sessions and blocks game-local eligibility;
+- selecting another wallet does not change the Registration Nullifier;
+- the operator sees game-scoped pseudonymous records only;
+- credential revocation and game moderation remain separate decisions.
 
-- One Session Key.
-- One target.
-- One selector.
-- One action asset or class if the target policy requires it.
-- One maximum amount per action.
-- One cumulative maximum.
-- One validity window.
+## Reward claim
 
-The first version forbids:
+An authenticated, eligible Application Account may receive one EIP-712 Reward
+Authorization binding:
 
-- Wildcard targets or selectors.
-- Arbitrary batch or nested calls.
-- Delegatecall.
-- Fallback authorization.
-- Native value transfer.
-- ERC-20 approve, permit, Permit2, or arbitrary transfer.
-- Oracle-priced limits.
-- Calendar reset periods.
-- Cross-chain permission reuse.
+- version and domain;
+- chain ID and verifying contract;
+- Stable Application ID;
+- result ID and claim ID;
+- recipient;
+- synthetic amount or points;
+- expiry.
 
-Each additional capability requires its own ADR and adversarial tests.
+The Arbitrum Sepolia contract verifies the configured signer, rejects malformed
+or expired claims, consumes each claim ID once, and updates state before any
+external interaction. It does not verify World or Semaphore proofs.
 
-## Repository modules
+World verification, issuance, registration, accounts, moderation, results, and
+eligibility remain off-chain.
 
-Planned structure:
+## Logical state
 
-```text
-apps/
-  demo-cli/                 test identity, proof, authorization, session, action
-packages/
-  contracts/                Hardhat project and Solidity contracts
-  policy/                   Mandate types, typed hashing, field conversion
-  prover/                   Semaphore identity, group mirror, proof generation
-  sdk/                      Safe, Smart Sessions, bundler, deployment clients
-deployments/
-  46630/                    verified Robinhood testnet records
-docs/
-  adr/                      architectural decisions
-  plans/                    phased implementation plans
-  research/                 evidence and rejected alternatives
-```
+The MVP store has:
 
-Do not add a custom relayer service, web application, database, or backend until the CLI vertical slice works.
+- `enrollment_authorizations`, unique `(sourceId, nonce)`;
+- `credentials`, keyed by group and identity commitment;
+- `application_accounts`, unique
+  `(stableApplicationId, registrationNullifier)`;
+- `application_sessions`, storing hashed opaque tokens or Login Key bindings;
+- `application_results`, keyed by stable result ID;
+- `reward_claims`, keyed by globally unique claim ID;
+- redacted `audit_events`.
 
-## Deployment model
+One local process may implement these logical responsibilities for the demo.
+Production separation is future work.
 
-### Local
+### Implemented Phase 2 issuance state
 
-Hardhat local network runs deterministic unit and integration tests. External contracts are deployed from pinned source or represented by exact test fixtures.
+The local Phase 2 issuer uses a file-backed SQLite database through a narrow
+store interface. One `BEGIN IMMEDIATE` transaction:
 
-### Robinhood testnet
+1. resolves an identical authorization digest to its existing Credential;
+2. checks deterministic nonce, subject, then commitment conflicts;
+3. inserts the authorization record, Credential, and ordered group membership;
+4. commits all records together or rolls all records back.
 
-Deploy or verify, in dependency order:
+Authoritative constraints are:
 
-1. ERC-4337 EntryPoint availability.
-2. Safe and Safe4337 dependencies.
-3. Safe7579 and Smart Sessions dependencies.
-4. Semaphore verifier and group contracts.
-5. AgentVisaAuthorization.
-6. AgentVisaCredentialPolicy.
-7. Demo target and Smart Account.
+- `enrollment_authorizations.authorization_digest` primary key;
+- unique `(source_id, nonce)`;
+- unique `(source_id, uniqueness_domain, opaque_subject_digest)`;
+- `credentials.credential_id` primary key;
+- unique `credentials.authorization_digest`;
+- unique `(group_id, identity_commitment)`;
+- unique `(group_id, membership_index)`;
+- `group_memberships` primary key `(group_id, leaf_index)`;
+- unique `(group_id, identity_commitment)` and unique `credential_id`.
 
-Every deployment record includes chain ID, address, bytecode hash, source version, constructor arguments, deployer, transaction hash, explorer URL, and verification status.
+Membership rows are replayed by `leaf_index` into the unchanged Semaphore v4
+`Group` implementation after restart. The issuer stores authorization metadata
+and digest, but not the source signature, source signing key, source evidence,
+or Semaphore identity secret.
 
-### Mainnet
+## Privacy boundaries
 
-Out of scope until explicitly approved after testnet completion and security review.
+- The source and AgentVisa may link enrollment to an identity commitment.
+- A Relying Party sees only its application-scoped nullifier and account.
+- Different Stable Application IDs produce unlinkable nullifiers, absent
+  correlation through usernames, wallets, analytics, timing, or network data.
+- Reward recipient and claim data are public on Arbitrum Sepolia.
+- Never log or place on-chain identity secrets, World nullifiers, raw proofs,
+  source evidence, PII, biometrics, or cross-application identity mappings.
 
-## Architecture gates
+## Reuse and constraints
 
-Current evidence:
+Reuse unchanged:
 
-| Gate | Status | Evidence |
-|---|---|---|
-| Native PowerShell and Linux CI | Partial | All root checks pass in native Windows PowerShell. Windows and Linux GitHub Actions are configured but have not run remotely because no commit or push was requested. |
-| Robinhood EntryPoint and Safe infrastructure | Partial | Read-only bytecode probes confirm EntryPoint v0.6-v0.8, Safe 1.4.1, Safe4337, and a public Pimlico bundler. Safe7579 and Smart Sessions are absent. |
-| Stable Permission Digest and mandatory policy hook | Pending | Do not approximate the Permission Digest or write the AgentVisa policy before Phase 1D and 1E pass. |
-| TypeScript and Solidity hashing parity | Passed | Phase 1A normal, boundary, field-conversion, and malformed vectors pass in both languages. |
-| Local standard Semaphore proof | Passed | Phase 1B validates message and Scope binding, replay rejection, member removal, and historical-root expiry with Semaphore 4.14.2. |
-| Direct Account Owner revocation | Pending | Must be proven without bundler or paymaster dependence. |
+- Semaphore v4 identity, group, proof, verifier, artifacts, and Merkle logic;
+- Viem and the existing Hardhat 3 toolchain;
+- IDKit request, signing, simulator, and hosted verification if the World
+  staging adapter is enabled.
 
-The architecture is not accepted until executable spikes prove:
+Build only:
 
-1. Native PowerShell and Linux CI can build and test the project.
-2. Required Safe and ERC-4337 infrastructure works on Robinhood testnet.
-3. Smart Sessions exposes a stable Permission Digest and mandatory policy hook.
-4. AgentVisaCredentialPolicy can check authorization without unsafe initialization callbacks.
-5. TypeScript and Solidity produce identical Mandate Digest, Scope Field, and permission identifiers.
-6. A Semaphore proof generated from a local group validates against the deployed group.
-7. Direct owner revocation works when bundler and paymaster services are unavailable.
+- typed Enrollment Authorization and source adapter boundary;
+- atomic enrollment and application registration state;
+- application scope/message encoding;
+- application account, moderation, result, and audit flows;
+- narrow Reward Authorization and claim contract;
+- localhost demo routes.
 
-If gates 3 or 4 fail, implement a narrow Safe-native module instead of weakening the account authorization model.
+Do not build World circuits, authenticators, registries, bridges, relays,
+custom Semaphore components, global identity, global bans, a bot detector,
+wallet infrastructure, token economics, governance, or upgradeability.
+
+## Demo routes
+
+- `/enroll`: synthetic authorization inspection and Credential issuance;
+- `/games/robot-rally`: register, play, win, change payout wallet, and claim;
+- `/operator/robot-rally`: inspect pseudonymous accounts and apply a game-local
+  ban;
+- `/audit`: ordered redacted events with trust labels.
+
+These gaming routes demonstrate platform-agnostic services; game-specific
+behavior belongs at the Relying Party adapter boundary.
+
+## Deferred production gates
+
+Not required to complete the synthetic localhost MVP:
+
+- World Developer Portal staging credentials and real-device testing;
+- arbitrary third-party World credential support;
+- identity and account recovery preserving bans;
+- separate issuer, platform, moderation, and authorizer services;
+- HSM-backed keys, retention policies, appeals, and incident response;
+- exact audit-to-source provenance for every dependency;
+- mainnet deployment or real-value rewards.

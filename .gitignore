@@ -30,3 +30,5 @@ typechain-types/
 Thumbs.db
 .vscode/
 .idea/
+
+.agentvisa-demo-data/

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "chainId": 421614,
+  "contractName": "GameRewardClaim",
+  "address": "0x0A93815977f7c8c2fE6126869254506B807C4E58",
+  "bytecodeHash": "0x0288a047abda51b146a0db75e2a5a3c4991d053eadd4c0e747b998d2defbb064",
+  "source": {
+    "kind": "local",
+    "name": "packages/contracts/contracts/GameRewardClaim.sol",
+    "version": "0.1.0"
+  },
+  "constructorArguments": ["0x6ef4Ac0bdb72faB3c538aA2AacFf54376CabB538"],
+  "authorizer": "0x6ef4Ac0bdb72faB3c538aA2AacFf54376CabB538",
+  "deployer": "0x7B15415Bfc0f3b9E9f29eEe9Fc989D16E3Af1559",
+  "transactionHash": "0x80026370ae16e2e25aa22a60bd963986ef7896155b99c05fe177ffe206166de9",
+  "explorerUrl": "https://sepolia.arbiscan.io/address/0x0A93815977f7c8c2fE6126869254506B807C4E58",
+  "verificationStatus": "unverified"
+}

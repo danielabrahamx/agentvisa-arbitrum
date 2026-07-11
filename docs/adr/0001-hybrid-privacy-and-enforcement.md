@@ -1,7 +1,12 @@
 # ADR-0001: Keep identity evidence off-chain and enforce mandates on-chain
 
-**Status:** Accepted  
+**Status:** Superseded by ADR-0006
+
 **Date:** 2026-07-10
+
+This decision records the former smart-account MVP. ADR-0006 retains the
+off-chain privacy principle but replaces mandate and smart-account enforcement
+with application-scoped registration and a narrow reward claim.
 
 ## Context
 

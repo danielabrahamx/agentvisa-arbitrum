@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "chainId": 421614,
+  "contractAddress": "0x0A93815977f7c8c2fE6126869254506B807C4E58",
+  "authorizer": "0x6ef4Ac0bdb72faB3c538aA2AacFf54376CabB538",
+  "recipient": "0x7B15415Bfc0f3b9E9f29eEe9Fc989D16E3Af1559",
+  "stableApplicationId": "0xacbfb2bf1ba9de6a534fa29cb9ff89b66ea6b7fbdc262c9750a5083d902a61cc",
+  "resultId": "0x0daa6c214c733fc3d068fbbb39d2f5e5221cb67251d15b0fd89dd630a8c95c1b",
+  "claimId": "0x5a8d33de9426dcb5b8df3e19894517fe6a5a04bfe4b60054873972520372be22",
+  "amount": "100",
+  "expiresAt": "0",
+  "claimTransactionHash": "0xf0038ae17975936a348412ae5a34286d84723aa23a0ad4e7e5e99e3820bc82ef",
+  "claimExplorerUrl": "https://sepolia.arbiscan.io/tx/0xf0038ae17975936a348412ae5a34286d84723aa23a0ad4e7e5e99e3820bc82ef",
+  "replayRejected": true,
+  "replayError": "The contract function \"claim\" reverted.\n\nError: ClaimAlreadyConsumed()\n \nContract Call:\n  address:   0x0A93815977f7c8c2fE6126869254506B807C4E58\n  function:  claim((uint8 version, bytes32 stableApplicationId, bytes32 resultId, bytes32 claimId, address recipient, uint256 amount, uint64 expiresAt), bytes signature)\n  args:           ({\"version\":1,\"stableApplicationId\":\"0xacbfb2bf1ba9de6a534fa29cb9ff89b66ea6b7fbdc262c9750a5083d902a61cc\",\"resultId\":\"0x0daa6c214c733fc3d068fbbb39d2f5e5221cb67251d15b0fd89dd630a8c95c1b\",\"claimId\":\"0x5a8d33de9426dcb5b8df3e19894517fe6a5a04bfe4b60054873972520372be22\",\"recipient\":\"0x7B15415Bfc0f3b9E9f29eEe9Fc989D16E3Af1559\",\"amount\":\"100\",\"expiresAt\":\"1783801081\"}, 0x1a3594004f6715662192c9e3215d45d3cf86907069fc50f7b50500467bd9daf460d14e95e51ce40dd2880738e95ff824342eba65aa0ea8d038810a95c0b1a6891c)\n  sender:    0x7b15415bfc0f3b9e9f29eee9fc989d16e3af1559\n\nDocs: https://viem.sh/docs/contract/writeContract\nDetails: execution reverted\nVersion: viem@2.54.2",
+  "syntheticPointsAfterClaim": "100",
+  "notes": [
+    "Blair synthetic claim on Arbitrum Sepolia.",
+    "On-chain state stores claim consumption and synthetic points only.",
+    "No World verifier, Semaphore proof, or personally identifying data was deployed."
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "field-and-uint64-boundaries",
+  "authorization": {
+    "version": 1,
+    "sourceId": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "uniquenessDomain": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "opaqueSubjectDigest": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "credentialSchemaId": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "assuranceId": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "semaphoreIdentityCommitment": "21888242871839275222246405745257275088548364400416034343698204186575808495616",
+    "issuedAt": "0",
+    "expiresAt": "18446744073709551615",
+    "nonce": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "expected": {
+    "signingDigest": "0x956730761c740f42298a9d1f32678178feb3de3c570f0b3b602df18d824bc45a"
+  }
+}

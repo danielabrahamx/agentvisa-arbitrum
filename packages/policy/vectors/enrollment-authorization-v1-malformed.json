@@ -1,0 +1,46 @@
+{
+  "cases": [
+    {
+      "name": "unsupported-version",
+      "field": "version",
+      "value": 2,
+      "error": "unsupported Enrollment Authorization version"
+    },
+    {
+      "name": "short-source-id",
+      "field": "sourceId",
+      "value": "0x01",
+      "error": "sourceId must be exactly 32 bytes"
+    },
+    {
+      "name": "empty-subject-sentinel",
+      "field": "opaqueSubjectDigest",
+      "value": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "error": "opaqueSubjectDigest must not be zero"
+    },
+    {
+      "name": "zero-identity-commitment",
+      "field": "semaphoreIdentityCommitment",
+      "value": "0",
+      "error": "semaphoreIdentityCommitment must be inside the BN254 scalar field"
+    },
+    {
+      "name": "identity-commitment-at-modulus",
+      "field": "semaphoreIdentityCommitment",
+      "value": "21888242871839275222246405745257275088548364400416034343698204186575808495617",
+      "error": "semaphoreIdentityCommitment must be inside the BN254 scalar field"
+    },
+    {
+      "name": "uint64-expiry-overflow",
+      "field": "expiresAt",
+      "value": "18446744073709551616",
+      "error": "expiresAt must fit uint64"
+    },
+    {
+      "name": "empty-time-window",
+      "field": "expiresAt",
+      "value": "1700000000",
+      "error": "expiresAt must be later than issuedAt"
+    }
+  ]
+}

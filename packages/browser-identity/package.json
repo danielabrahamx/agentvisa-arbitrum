@@ -1,0 +1,28 @@
+{
+  "name": "@agentvisa/browser-identity",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agentvisa/policy": "workspace:*",
+    "@semaphore-protocol/group": "4.14.2",
+    "@semaphore-protocol/identity": "4.14.2",
+    "@semaphore-protocol/proof": "4.14.2"
+  },
+  "devDependencies": {
+    "@zk-kit/semaphore-artifacts": "4.13.0",
+    "viem": "2.54.2"
+  }
+}

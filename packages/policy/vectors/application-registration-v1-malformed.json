@@ -1,0 +1,34 @@
+{
+  "cases": [
+    {
+      "name": "unsupported-version",
+      "field": "version",
+      "value": 2,
+      "error": "unsupported Application Registration version"
+    },
+    {
+      "name": "short-application-id",
+      "field": "stableApplicationId",
+      "value": "0x01",
+      "error": "stableApplicationId must be exactly 32 bytes"
+    },
+    {
+      "name": "empty-application-id",
+      "field": "stableApplicationId",
+      "value": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "error": "stableApplicationId must not be zero"
+    },
+    {
+      "name": "short-login-key",
+      "field": "loginPublicKey",
+      "value": "0x01",
+      "error": "loginPublicKey must be exactly 32 bytes"
+    },
+    {
+      "name": "empty-login-key",
+      "field": "loginPublicKey",
+      "value": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "error": "loginPublicKey must not be zero"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "fixed-width-boundaries",
+  "registration": {
+    "version": 1,
+    "stableApplicationId": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "loginPublicKey": "0x0000000000000000000000000000000000000000000000000000000000000001"
+  },
+  "expected": {
+    "scopeDigest": "0xd5fd5bd594c4be9e5d90ac6e5dd7fb53ab8ac96636c6b9f7a8d7adbd257e88aa",
+    "scopeField": "9237311385320924316867826699449038229068838076150841122957602620520645167270",
+    "messageDigest": "0x594d23873b3a20f67617376f01b3569fb98ae18be6252922e9e450afaefc1912",
+    "messageField": "18503893083011644665032340895003734091026748934604850888046194568228998224145"
+  }
+}
