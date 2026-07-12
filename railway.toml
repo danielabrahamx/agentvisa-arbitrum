@@ -1,6 +1,6 @@
 [build]
-builder = "NIXPACKS"
-buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @agentvisa/localhost-demo... build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "node packages/localhost-demo/scripts/serve-static.mjs"
