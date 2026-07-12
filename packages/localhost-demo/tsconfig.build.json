@@ -6,7 +6,7 @@
     "outDir": "dist",
     "rootDir": "src"
   },
-  "include": ["src/static-pages.ts"],
+  "include": ["src/static-pages.ts", "src/load-dotenv.ts"],
   "exclude": [
     "src/client.ts",
     "src/static-client.ts",
