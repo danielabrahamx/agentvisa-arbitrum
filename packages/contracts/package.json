@@ -10,6 +10,7 @@
     "test": "hardhat test",
     "test:integration": "hardhat test --grep integration",
     "deploy:arbitrum-sepolia": "hardhat run scripts/deploy-game-reward-claim.ts --network arbitrumSepolia",
+    "deploy:admission-sepolia": "hardhat run scripts/deploy-admission-sepolia.ts --network arbitrumSepolia",
     "claim:arbitrum-sepolia": "hardhat run scripts/blair-claim-sepolia.ts --network arbitrumSepolia"
   },
   "devDependencies": {

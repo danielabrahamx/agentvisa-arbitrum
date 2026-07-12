@@ -32,9 +32,7 @@ export class SqliteDemoJourneyStore {
       )
       .run(commitmentKey, currentTime.toString());
     const row = this.#database
-      .prepare(
-        "SELECT issued_at AS issuedAt FROM enrollment_issued_at WHERE commitment_key = ?",
-      )
+      .prepare("SELECT issued_at AS issuedAt FROM enrollment_issued_at WHERE commitment_key = ?")
       .get(commitmentKey) as unknown as { readonly issuedAt: string };
     return BigInt(row.issuedAt);
   }

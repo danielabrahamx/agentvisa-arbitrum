@@ -18,6 +18,7 @@ import {
   explorerTxUrl,
   type DemoRewardClaimPublicConfig,
 } from "./claim-constants.js";
+import { freshWalletGasFees } from "./wallet-fees.js";
 
 interface EthereumProvider {
   request(args: {
@@ -92,11 +93,13 @@ export async function submitGameRewardClaim(
     expiresAt: BigInt(issued.authorization.expiresAt),
   };
 
+  const gasFees = await freshWalletGasFees(publicClient);
   const hash = await walletClient.writeContract({
     address: config.contractAddress || DEMO_REWARD_CLAIM_CONTRACT,
     abi: GAME_REWARD_CLAIM_ABI,
     functionName: "claim",
     args: [authorization, issued.signature],
+    ...gasFees,
   });
   await publicClient.waitForTransactionReceipt({ hash });
   return {

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "chainId": 421614,
+  "rpcUrl": "https://sepolia-rollup.arbitrum.io/rpc",
+  "semaphore": "0x846Edd64717990ccb6a8DB9790f8839C4b2054cE",
+  "admission": "0x1f43262ebcF988b06315777d6e90bAA593DA4442",
+  "credentialGroupId": "0",
+  "stableApplicationId": "0xacbfb2bf1ba9de6a534fa29cb9ff89b66ea6b7fbdc262c9750a5083d902a61cc",
+  "enrollmentSourceId": "0xb0a439ebc9379044963536562c66b42e39b535fc282c4a110818293a3dc66b18",
+  "enrollmentSigner": "0x7B15415Bfc0f3b9E9f29eEe9Fc989D16E3Af1559",
+  "maximumValiditySeconds": "300"
+}

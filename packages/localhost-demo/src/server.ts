@@ -13,8 +13,10 @@ const EXPECTED_AUTHORIZER = "0x6ef4Ac0bdb72faB3c538aA2AacFf54376CabB538" as Addr
 const packageRoot = fileURLToPath(new URL("..", import.meta.url));
 loadWorkspaceDotenv(packageRoot);
 
-const host = process.env.AGENTVISA_DEMO_HOST ?? "127.0.0.1";
-const port = parsePort(process.env.AGENTVISA_DEMO_PORT);
+const host =
+  process.env.AGENTVISA_DEMO_HOST ??
+  (process.env.PORT !== undefined && process.env.PORT.length > 0 ? "0.0.0.0" : "127.0.0.1");
+const port = parsePort(process.env.AGENTVISA_DEMO_PORT ?? process.env.PORT);
 const dataDirectory = resolve(process.env.AGENTVISA_DEMO_DATA_DIR ?? ".agentvisa-demo-data");
 const rewardClaim = readRewardClaimConfiguration();
 const application = new DemoApplication({
@@ -37,7 +39,8 @@ server.listen(port, host, () => {
   const claimLabel = application.rewardClaimConfig.enabled
     ? "reward claims enabled (Arbitrum Sepolia)"
     : "reward claims disabled (set ARBITRUM_SEPOLIA_AUTHORIZER_PRIVATE_KEY)";
-  console.log(`AgentVisa synthetic demo: http://${host}:${resolvedPort}/enroll (${claimLabel})`);
+  const displayHost = host === "0.0.0.0" ? "127.0.0.1" : host;
+  console.log(`AgentVisa synthetic demo: http://${displayHost}:${resolvedPort}/ (${claimLabel})`);
 });
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {

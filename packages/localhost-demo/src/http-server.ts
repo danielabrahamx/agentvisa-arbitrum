@@ -8,12 +8,8 @@ import { DEMO_CREDENTIAL_GROUP_ID, ROBOT_RALLY_APPLICATION_ID } from "./constant
 import { DemoApplication } from "./demo-application.js";
 import { DEMO_STYLES, renderDemoPage, type DemoPagePath } from "./pages.js";
 
-const PAGE_PATHS = new Set<DemoPagePath>([
-  "/enroll",
-  "/games/robot-rally",
-  "/operator/robot-rally",
-  "/audit",
-]);
+const PAGE_PATHS = new Set<DemoPagePath>(["/", "/demo", "/operator/robot-rally", "/audit"]);
+const LEGACY_DEMO_REDIRECTS = new Set(["/enroll", "/games/robot-rally"]);
 const MAXIMUM_BODY_BYTES = 1_000_000;
 
 export function createDemoHttpServer(application: DemoApplication) {
@@ -31,6 +27,11 @@ async function routeRequest(
 ): Promise<void> {
   setSecurityHeaders(response);
   const url = new URL(request.url ?? "/", "http://localhost");
+  if (request.method === "GET" && LEGACY_DEMO_REDIRECTS.has(url.pathname)) {
+    response.writeHead(302, { location: "/", "cache-control": "no-store" });
+    response.end();
+    return;
+  }
   if (request.method === "GET" && PAGE_PATHS.has(url.pathname as DemoPagePath)) {
     sendText(
       response,

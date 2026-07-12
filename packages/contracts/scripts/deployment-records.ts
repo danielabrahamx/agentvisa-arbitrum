@@ -74,6 +74,64 @@ export function deploymentRecordPath(workspaceRoot: string): string {
   );
 }
 
+export function semaphoreDeploymentRecordPath(workspaceRoot: string): string {
+  return resolve(workspaceRoot, "deployments", String(ARBITRUM_SEPOLIA_CHAIN_ID), "Semaphore.json");
+}
+
+export function admissionDeploymentRecordPath(workspaceRoot: string): string {
+  return resolve(
+    workspaceRoot,
+    "deployments",
+    String(ARBITRUM_SEPOLIA_CHAIN_ID),
+    "AgentVisaAdmission.json",
+  );
+}
+
+export function admissionBundlePath(workspaceRoot: string): string {
+  return resolve(workspaceRoot, "deployments", String(ARBITRUM_SEPOLIA_CHAIN_ID), "admission.json");
+}
+
+export interface SemaphoreDeploymentRecordV1 {
+  readonly schemaVersion: 1;
+  readonly chainId: number;
+  readonly contractName: "Semaphore";
+  readonly address: Address;
+  readonly bytecodeHash: Hex;
+  readonly deployer: Address;
+  readonly transactionHash: Hex;
+  readonly explorerUrl: string;
+  readonly credentialGroupId: string;
+  readonly verificationStatus: "unverified" | "pending" | "verified" | "failed";
+}
+
+export interface AdmissionDeploymentRecordV1 {
+  readonly schemaVersion: 1;
+  readonly chainId: number;
+  readonly contractName: "AgentVisaAdmission";
+  readonly address: Address;
+  readonly bytecodeHash: Hex;
+  readonly deployer: Address;
+  readonly enrollmentSigner: Address;
+  readonly semaphore: Address;
+  readonly credentialGroupId: string;
+  readonly transactionHash: Hex;
+  readonly explorerUrl: string;
+  readonly verificationStatus: "unverified" | "pending" | "verified" | "failed";
+}
+
+export interface AdmissionBundleV1 {
+  readonly schemaVersion: 1;
+  readonly chainId: number;
+  readonly rpcUrl: string;
+  readonly semaphore: Address;
+  readonly admission: Address;
+  readonly credentialGroupId: string;
+  readonly stableApplicationId: Hex;
+  readonly enrollmentSourceId: Hex;
+  readonly enrollmentSigner: Address;
+  readonly maximumValiditySeconds: string;
+}
+
 export function blairClaimProofPath(workspaceRoot: string): string {
   return resolve(
     workspaceRoot,
@@ -212,6 +270,116 @@ export function readValidatedBlairClaimProof(workspaceRoot: string): BlairClaimP
 export function writeJsonFile(path: string, value: unknown): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+export function validateSemaphoreDeploymentRecord(record: unknown): SemaphoreDeploymentRecordV1 {
+  assert.equal(typeof record, "object");
+  assert.ok(record !== null);
+  const value = record as Record<string, unknown>;
+  assert.equal(value.schemaVersion, 1);
+  assert.equal(value.chainId, ARBITRUM_SEPOLIA_CHAIN_ID);
+  assert.equal(value.contractName, "Semaphore");
+  const address = assertAddress(value.address, "address");
+  const bytecodeHash = assertBytes32(value.bytecodeHash, "bytecodeHash");
+  const deployer = assertAddress(value.deployer, "deployer");
+  const transactionHash = assertBytes32(value.transactionHash, "transactionHash");
+  assert.equal(typeof value.credentialGroupId, "string");
+  assert.equal(typeof value.explorerUrl, "string");
+  return {
+    schemaVersion: 1,
+    chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
+    contractName: "Semaphore",
+    address,
+    bytecodeHash,
+    deployer,
+    transactionHash,
+    explorerUrl: value.explorerUrl as string,
+    credentialGroupId: value.credentialGroupId as string,
+    verificationStatus:
+      value.verificationStatus as SemaphoreDeploymentRecordV1["verificationStatus"],
+  };
+}
+
+export function validateAdmissionDeploymentRecord(record: unknown): AdmissionDeploymentRecordV1 {
+  assert.equal(typeof record, "object");
+  assert.ok(record !== null);
+  const value = record as Record<string, unknown>;
+  assert.equal(value.schemaVersion, 1);
+  assert.equal(value.chainId, ARBITRUM_SEPOLIA_CHAIN_ID);
+  assert.equal(value.contractName, "AgentVisaAdmission");
+  const address = assertAddress(value.address, "address");
+  const bytecodeHash = assertBytes32(value.bytecodeHash, "bytecodeHash");
+  const deployer = assertAddress(value.deployer, "deployer");
+  const enrollmentSigner = assertAddress(value.enrollmentSigner, "enrollmentSigner");
+  const semaphore = assertAddress(value.semaphore, "semaphore");
+  const transactionHash = assertBytes32(value.transactionHash, "transactionHash");
+  assert.equal(typeof value.credentialGroupId, "string");
+  assert.equal(typeof value.explorerUrl, "string");
+  return {
+    schemaVersion: 1,
+    chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
+    contractName: "AgentVisaAdmission",
+    address,
+    bytecodeHash,
+    deployer,
+    enrollmentSigner,
+    semaphore,
+    credentialGroupId: value.credentialGroupId as string,
+    transactionHash,
+    explorerUrl: value.explorerUrl as string,
+    verificationStatus:
+      value.verificationStatus as AdmissionDeploymentRecordV1["verificationStatus"],
+  };
+}
+
+export function validateAdmissionBundle(bundle: unknown): AdmissionBundleV1 {
+  assert.equal(typeof bundle, "object");
+  assert.ok(bundle !== null);
+  const value = bundle as Record<string, unknown>;
+  assert.equal(value.schemaVersion, 1);
+  assert.equal(value.chainId, ARBITRUM_SEPOLIA_CHAIN_ID);
+  assert.equal(typeof value.rpcUrl, "string");
+  const semaphore = assertAddress(value.semaphore, "semaphore");
+  const admission = assertAddress(value.admission, "admission");
+  const enrollmentSigner = assertAddress(value.enrollmentSigner, "enrollmentSigner");
+  assertBytes32(value.stableApplicationId, "stableApplicationId");
+  assertBytes32(value.enrollmentSourceId, "enrollmentSourceId");
+  assert.equal(typeof value.credentialGroupId, "string");
+  assert.equal(typeof value.maximumValiditySeconds, "string");
+  return {
+    schemaVersion: 1,
+    chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
+    rpcUrl: value.rpcUrl as string,
+    semaphore,
+    admission,
+    credentialGroupId: value.credentialGroupId as string,
+    stableApplicationId: (value.stableApplicationId as string).toLowerCase() as Hex,
+    enrollmentSourceId: (value.enrollmentSourceId as string).toLowerCase() as Hex,
+    enrollmentSigner,
+    maximumValiditySeconds: value.maximumValiditySeconds as string,
+  };
+}
+
+export function readValidatedSemaphoreDeploymentRecord(
+  workspaceRoot: string,
+): SemaphoreDeploymentRecordV1 {
+  const path = semaphoreDeploymentRecordPath(workspaceRoot);
+  assert.ok(existsSync(path), `missing Semaphore deployment record at ${path}`);
+  return validateSemaphoreDeploymentRecord(JSON.parse(readFileSync(path, "utf8")));
+}
+
+export function readValidatedAdmissionDeploymentRecord(
+  workspaceRoot: string,
+): AdmissionDeploymentRecordV1 {
+  const path = admissionDeploymentRecordPath(workspaceRoot);
+  assert.ok(existsSync(path), `missing AgentVisaAdmission deployment record at ${path}`);
+  return validateAdmissionDeploymentRecord(JSON.parse(readFileSync(path, "utf8")));
+}
+
+export function readValidatedAdmissionBundle(workspaceRoot: string): AdmissionBundleV1 {
+  const path = admissionBundlePath(workspaceRoot);
+  assert.ok(existsSync(path), `missing admission bundle at ${path}`);
+  return validateAdmissionBundle(JSON.parse(readFileSync(path, "utf8")));
 }
 
 export function assertNoIdentitySurfaceInBytecode(bytecode: Hex): void {

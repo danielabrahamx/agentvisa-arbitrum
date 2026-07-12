@@ -1,81 +1,76 @@
 # AgentVisa Gaming Platform MVP Handoff
 
-**Saved:** 2026-07-11
+**Saved:** 2026-07-12
 
-**Status:** Phase 6b complete. Public HTTPS demo claims on real Arbitrum
-Sepolia. Active work is optional Phase 7 (World staging) or polish.
+**Status:** Hackathon static SPA + on-chain Semaphore admission on Arbitrum Sepolia.
 
-**Active phase:** Phase 7 — Optional World staging adapter (deferred / optional)
+**Active phase:** Maintenance / judge demo. See `docs/adr/0007-on-chain-semaphore-admission.md`.
 
-## Live demo (keep processes running)
+## Product boundary (important)
+
+**World is not our authenticator.** The demo uses a **synthetic off-chain
+uniqueness source** only. Upstream uniqueness is pluggable narrative for
+judges — not a World dependency. Do not add World SDK, staging, or verification.
+
+## Live demo (static SPA)
 
 | Item | Value |
 |---|---|
-| Public HTTPS | https://lincoln-attacks-withdrawal-prompt.trycloudflare.com/enroll |
-| Local | http://127.0.0.1:4173/enroll |
-| Contract | [`0x0A93815977f7c8c2fE6126869254506B807C4E58`](https://sepolia.arbiscan.io/address/0x0A93815977f7c8c2fE6126869254506B807C4E58) |
+| **Public** | https://demo-production-bb21.up.railway.app/ |
+| Local | http://127.0.0.1:4173/ |
+| **Semaphore** | [`0x846Edd64717990ccb6a8DB9790f8839C4b2054cE`](https://sepolia.arbiscan.io/address/0x846Edd64717990ccb6a8DB9790f8839C4b2054cE) |
+| **AgentVisaAdmission** | [`0x1f43262ebcF988b06315777d6e90bAA593DA4442`](https://sepolia.arbiscan.io/address/0x1f43262ebcF988b06315777d6e90bAA593DA4442) |
 | Chain | Arbitrum Sepolia `421614` |
+| Host | Railway static file server (`railway.toml`) |
 
-**Restart if the quick tunnel dies:**
+Judge path (3 steps, MetaMask on `421614`):
+
+1. **Get credential** — browser identity → synthetic enrollment auth → `AgentVisaAdmission.enroll`
+2. **Join Robot Rally** — scoped proof → `Semaphore.validateProof`
+3. **Sybil check** — same identity, new Login Key → `validateProof` **reverts** (nullifier replay)
+
+No Node API or SQLite at runtime. Technical JSON under **Technical details**.
+
+## Restart
+
+**Local:**
 
 ```powershell
 pnpm --dir "C:\Users\danie\agentvisa-arbitrum" --filter @agentvisa/localhost-demo build
 pnpm --dir "C:\Users\danie\agentvisa-arbitrum" --filter @agentvisa/localhost-demo start
-# second terminal:
-pnpm --dir "C:\Users\danie\agentvisa-arbitrum" dlx cloudflared tunnel --url http://127.0.0.1:4173
 ```
 
-Requires workspace `.env` with `ARBITRUM_SEPOLIA_AUTHORIZER_PRIVATE_KEY` (never
-commit). Quick tunnels get a new hostname each restart.
+**Redeploy contracts (if needed):**
 
-## Demo path for judges
+```powershell
+pnpm --dir "C:\Users\danie\agentvisa-arbitrum" --filter @agentvisa/contracts deploy:admission-sepolia
+pnpm --dir "C:\Users\danie\agentvisa-arbitrum" --filter @agentvisa/localhost-demo build
+```
 
-1. Open the public HTTPS URL (Chrome/Brave + MetaMask).
-2. Enroll (Alex or Blair) — off-chain synthetic Credential.
-3. Robot Rally → Register → Authenticate Login Key → Play → Record win.
-4. **Claim on Arbitrum Sepolia** — MetaMask on chain `421614`, wallet pays gas,
-   server signs EIP-712 only; show Arbiscan tx link.
-5. Replay of the same claim ID fails on-chain.
+**Railway redeploy:**
 
-**Wallet requirements:** Arbitrum Sepolia ETH (not Ethereum Sepolia). RPC
-`https://sepolia-rollup.arbitrum.io/rpc`. Bridge via
-[bridge.arbitrum.io](https://bridge.arbitrum.io/) if needed.
+```powershell
+railway up -d -y --ci
+```
 
-## What is real testnet vs off-chain
+## What is on-chain vs browser-only
 
-| Step | Where |
+| Data | Location |
 |---|---|
-| Enroll / Credential / register / play / ban / win counters | Off-chain SQLite + synthetic uniqueness (MVP trusted issuer) |
-| Reward claim | **Real** Arbitrum Sepolia `GameRewardClaim.claim` via browser wallet |
-| Claim / result IDs | Protocol-derived keccak hashes (not the spent `blair-claim-sepolia-1`) |
+| Identity **secret** | Browser localStorage only |
+| Identity **commitment** | Semaphore group member on-chain |
+| Enrollment nonce / opaque subject | Consumed in `AgentVisaAdmission` |
+| **scope** / **message** / **nullifier** | Semaphore proof public inputs on-chain |
+| Demo enrollment signing | Testnet key injected at static build (not production) |
 
-Authorizer (server-only): `0x6ef4Ac0bdb72faB3c538aA2AacFf54376CabB538`
-
-## Start here (next agent)
-
-1. `AGENTS.md`
-2. `CONTEXT.md`
-3. `README.md`
-4. `docs/plans/BUILD_PLAN.md`
-5. `docs/plans/NEXT_AGENT_PROMPT.md`
-6. This file
-
-Do not redeploy `GameRewardClaim` unless broken. Do not start World staging
-unless the user asks for Phase 7.
+Historical `GameRewardClaim` at `0x0A93815977f7c8c2fE6126869254506B807C4E58` remains deployed but is **not** on the judge path.
 
 ## Security boundaries
 
-- synthetic identities and synthetic points only;
-- identity secret stays in the browser;
-- authorizer private key never in client bundle;
-- claim IDs consumed once; no PII / proofs on-chain;
-- no production data, mainnet, or real funds.
-
-## Working tree caution
-
-Uncommitted historical Safe4337 / research material may still be present.
-Preserve unrelated user changes. No commit or push unless explicitly
-requested. Never commit `.env`.
+- Synthetic identities only; testnet Sepolia ETH for gas.
+- Identity secret stays in the browser.
+- Demo enrollment signer is bundled in the static build — **testnet only**.
+- No PII on-chain; no World integration; no mainnet.
 
 ## Root commands
 
@@ -89,3 +84,10 @@ pnpm --dir "C:\Users\danie\agentvisa-arbitrum" test
 pnpm --dir "C:\Users\danie\agentvisa-arbitrum" test:integration
 pnpm --dir "C:\Users\danie\agentvisa-arbitrum" audit
 ```
+
+## Canonical references
+
+1. `docs/adr/0007-on-chain-semaphore-admission.md`
+2. `deployments/421614/admission.json`
+3. `packages/contracts/test/integration/local-semaphore.integration.test.ts`
+4. `packages/localhost-demo/src/static-client.ts`

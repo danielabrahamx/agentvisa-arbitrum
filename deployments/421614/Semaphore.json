@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "chainId": 421614,
+  "contractName": "Semaphore",
+  "address": "0x846Edd64717990ccb6a8DB9790f8839C4b2054cE",
+  "bytecodeHash": "0x34e965aa71aa1a6719c725ccc8b2257eacc8a57bc1d5bd3ee20d99a327a6f425",
+  "deployer": "0x7B15415Bfc0f3b9E9f29eEe9Fc989D16E3Af1559",
+  "transactionHash": "0x6ac0edfa23c4d3eb4e069f054d896489009ecaa90f6c15d9bad9ea173c264e9c",
+  "explorerUrl": "https://sepolia.arbiscan.io/address/0x846Edd64717990ccb6a8DB9790f8839C4b2054cE",
+  "credentialGroupId": "0",
+  "verificationStatus": "unverified"
+}

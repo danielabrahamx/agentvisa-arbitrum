@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node scripts/build-client.mjs",
+    "build": "tsc -p tsconfig.build.json && node scripts/build-static.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:integration": "vitest run test/http-server.test.ts test/claim-authorization.test.ts",
-    "start": "node dist/server.js",
-    "start:public": "node dist/server.js"
+    "test:integration": "vitest run test/static-build.test.ts",
+    "start": "node scripts/serve-static.mjs",
+    "start:public": "node scripts/serve-static.mjs"
   },
   "dependencies": {
     "@agentvisa/application-service": "workspace:*",

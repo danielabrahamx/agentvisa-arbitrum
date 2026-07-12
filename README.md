@@ -10,6 +10,8 @@ and reward boundaries remain platform-agnostic.
 
 ## MVP journey
 
+Full platform story (Phases 0–5):
+
 1. A synthetic Uniqueness Source authorizes enrollment for a
    browser-generated Semaphore commitment.
 2. AgentVisa consumes the authorization and issues an AgentVisa Semaphore
@@ -20,7 +22,11 @@ and reward boundaries remain platform-agnostic.
    game-local ban.
 6. Another holder wins and receives one narrow Reward Authorization.
 7. A minimal Arbitrum Sepolia contract consumes the claim once and records
-   synthetic points.
+   synthetic points (historical `GameRewardClaim`; not the competition judge path).
+
+**Competition demo (Phase 6e):** steps 1–3 only, enforced on Arbitrum Sepolia via
+`AgentVisaAdmission.enroll` and `Semaphore.validateProof`, plus an on-chain sybil
+revert demo. Static SPA — no backend.
 
 ## Product boundary
 
@@ -30,11 +36,12 @@ This MVP:
 - keeps the identity secret in the browser;
 - exposes only application-scoped nullifiers to Relying Parties;
 - separates Credential issuance from game moderation;
-- uses Arbitrum Sepolia only for a synthetic reward claim;
-- can add World staging through a Uniqueness Source adapter.
+- enforces membership and scoped nullifiers on Arbitrum Sepolia via upstream Semaphore.
 
 It does not:
 
+- integrate World ID (Phase 7 cancelled for this competition repo);
+- run a Node API or SQLite at demo runtime;
 - issue a World-native third-party credential;
 - claim the holder is legally identified, KYC-approved, or not using
   automation;
@@ -46,64 +53,64 @@ It does not:
 
 ## Current status
 
-Phases 0–6b are complete. **Live public demo (Cloudflare quick tunnel):**
+Hackathon static SPA + on-chain Semaphore admission on Arbitrum Sepolia.
 
-**https://lincoln-attacks-withdrawal-prompt.trycloudflare.com/enroll**
+**Public demo:** https://demo-production-bb21.up.railway.app/
+**Local:** http://127.0.0.1:4173/
+See `HANDOFF.md` and `packages/localhost-demo/DEPLOY.md`.
 
-Keep the local demo server + `cloudflared` process running (see below). Quick
-tunnel hostnames change if you restart the tunnel — check `HANDOFF.md`.
+Judge path (3 MetaMask steps on chain `421614`):
 
-Identity/enrollment/play remain trusted off-chain (synthetic uniqueness +
-SQLite). After a win, **Claim on Arbitrum Sepolia** asks the server for an
-EIP-712 Reward Authorization and submits a **real** `claim` tx from MetaMask
-on chain `421614`.
+1. **Get credential** — `AgentVisaAdmission.enroll`
+2. **Join Robot Rally** — `Semaphore.validateProof`
+3. **Sybil check** — second `validateProof` reverts (nullifier replay)
 
-World staging remains optional (Phase 7).
+No runtime backend. Demo enrollment signer is bundled at build time (testnet only).
+
+**Public smoke:** `pnpm smoke:demo` (scripted; no wallet).
 
 ## Local vs testnet
 
 | Step | Where it runs |
 |---|---|
-| Enroll, Credential, register, play, ban, win counters | Demo process + SQLite (synthetic uniqueness source), on localhost or public HTTPS |
-| Reward claim | **Real** browser MetaMask/Rabby tx on Arbitrum Sepolia `421614` |
-| World personhood | Not in demo (optional Phase 7) |
+| Enroll, register, sybil | **Real** MetaMask txs on Arbitrum Sepolia `421614` |
+| Identity secret | Browser localStorage only |
+| World personhood | **Not implemented** — synthetic off-chain uniqueness only |
 
-**Wallet / browser for testnet claims**
+**Wallet / browser**
 
 - Browser: desktop Chrome or Brave (Edge OK)
 - Extension: MetaMask (preferred) or Rabby
 - Network: **Arbitrum Sepolia** (chain ID `421614`), **not** Ethereum Sepolia (`11155111`)
 - RPC: `https://sepolia-rollup.arbitrum.io/rpc`
 - Explorer: `https://sepolia.arbiscan.io`
-- Gas: small amount of **Arbitrum Sepolia** ETH in the connected wallet
-  (bridge from L1 Sepolia via [bridge.arbitrum.io](https://bridge.arbitrum.io/) if needed)
-- **Server** keeps `ARBITRUM_SEPOLIA_AUTHORIZER_PRIVATE_KEY` and signs EIP-712 only
-- **Browser wallet** is the claim recipient and pays gas for `claim`
+- Gas: Sepolia ETH for enroll + register (+ sybil revert demo)
 
-Contract:
-[`0x0A93815977f7c8c2fE6126869254506B807C4E58`](https://sepolia.arbiscan.io/address/0x0A93815977f7c8c2fE6126869254506B807C4E58)
+Contracts:
+
+- Semaphore: [`0x846Edd64717990ccb6a8DB9790f8839C4b2054cE`](https://sepolia.arbiscan.io/address/0x846Edd64717990ccb6a8DB9790f8839C4b2054cE)
+- AgentVisaAdmission: [`0x1f43262ebcF988b06315777d6e90bAA593DA4442`](https://sepolia.arbiscan.io/address/0x1f43262ebcF988b06315777d6e90bAA593DA4442)
 
 ### Run the demo locally
 
 ```powershell
-# Requires workspace `.env` with ARBITRUM_SEPOLIA_AUTHORIZER_PRIVATE_KEY
+pnpm --dir "C:\Users\danie\agentvisa-arbitrum" --filter @agentvisa/contracts deploy:admission-sepolia
 pnpm --dir "C:\Users\danie\agentvisa-arbitrum" --filter @agentvisa/localhost-demo build
 pnpm --dir "C:\Users\danie\agentvisa-arbitrum" --filter @agentvisa/localhost-demo start
 ```
 
-Open `http://127.0.0.1:4173/enroll`. Path: enroll → Robot Rally register →
-login → play → win → **Claim on Arbitrum Sepolia**.
+Open `http://127.0.0.1:4173/`. Path: Get credential → Join Robot Rally → Sybil check (all on Arbitrum Sepolia).
 
-### Public HTTPS URL (Cloudflare quick tunnel)
+### Stable public host (Railway)
 
-Keep the demo server running, then in a second PowerShell:
+Production deploy uses `railway.toml` at the repo root. Redeploy:
 
 ```powershell
-pnpm --dir "C:\Users\danie\agentvisa-arbitrum" dlx cloudflared tunnel --url http://127.0.0.1:4173
+railway up -d -y --ci
 ```
 
-Use the printed `https://*.trycloudflare.com` URL. Do not expose `.env` or the
-demo SQLite data directory through the tunnel beyond the HTTP app itself.
+Details: `packages/localhost-demo/DEPLOY.md`. Do not rely on Cloudflare quick
+tunnels for shared judge links.
 
 ## Documentation
 
@@ -113,8 +120,9 @@ demo SQLite data directory through the tunnel beyond the HTTP app itself.
 - [Buy versus build](docs/BUY_VS_BUILD.md)
 - [Active build plan](docs/plans/BUILD_PLAN.md)
 - [Current handoff](HANDOFF.md)
+- [On-chain admission ADR](docs/adr/0007-on-chain-semaphore-admission.md)
 - [Architecture decisions](docs/adr/)
-- [World ID gaming recommendation](docs/research/2026-07-11-world-id-gaming-demo-recommendation.md)
+- [World ID gaming recommendation](docs/research/2026-07-11-world-id-gaming-demo-recommendation.md) — research only; not implemented for competition MVP
 
 ## Development
 

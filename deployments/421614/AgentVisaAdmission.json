@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "chainId": 421614,
+  "contractName": "AgentVisaAdmission",
+  "address": "0x1f43262ebcF988b06315777d6e90bAA593DA4442",
+  "bytecodeHash": "0x3f0119214ef2ecb69e736d920be6483809784d569aa4fb5f622bc69a12643c18",
+  "deployer": "0x7B15415Bfc0f3b9E9f29eEe9Fc989D16E3Af1559",
+  "enrollmentSigner": "0x7B15415Bfc0f3b9E9f29eEe9Fc989D16E3Af1559",
+  "semaphore": "0x846Edd64717990ccb6a8DB9790f8839C4b2054cE",
+  "credentialGroupId": "0",
+  "transactionHash": "0x46c4a663b3f5aa4964d4f2f519769954524f0fe8c5b45b91497513c603af3ac9",
+  "explorerUrl": "https://sepolia.arbiscan.io/address/0x1f43262ebcF988b06315777d6e90bAA593DA4442",
+  "verificationStatus": "unverified"
+}

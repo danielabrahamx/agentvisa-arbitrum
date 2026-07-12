@@ -36,21 +36,46 @@ describe("localhost demo HTTP boundary", () => {
     await rm(directory, { recursive: true, force: true });
   });
 
-  it.each(["/enroll", "/games/robot-rally", "/operator/robot-rally", "/audit"])(
-    "serves the thin %s page with synthetic trust and privacy labels",
+  it.each(["/", "/demo"])("serves the guided demo at %s", async (path) => {
+    const response = await fetch(`${origin}${path}`);
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(html).toContain("Post-uniqueness credential demo");
+    expect(html).toContain("reward enforced on Arbitrum Sepolia");
+    expect(html).toContain("Get credential");
+    expect(html).toContain("Join service");
+    expect(html).toContain("Sybil check");
+    expect(html).toContain("Claim on Arbitrum");
+    expect(html).toContain("Technical details");
+    expect(html).toContain('href="/" class="nav-primary">Demo</a>');
+    expect(html).toContain("Operator");
+    expect(html).toContain("Audit");
+    expect(html).not.toContain("Trusted component");
+    expect(html).not.toContain("Wallet label");
+    expect(html).not.toContain("Submit wrong proof");
+    expect(html).not.toMatch(/\bWorld\b/i);
+    expect(html).not.toMatch(/0x[0-9a-f]{64}/i);
+  });
+
+  it("redirects legacy enroll and game routes to the guided demo", async () => {
+    for (const path of ["/enroll", "/games/robot-rally"]) {
+      const response = await fetch(`${origin}${path}`, { redirect: "manual" });
+      expect(response.status).toBe(302);
+      expect(response.headers.get("location")).toBe("/");
+    }
+  });
+
+  it.each(["/operator/robot-rally", "/audit"])(
+    "keeps secondary %s reachable without the trust-card wall",
     async (path) => {
       const response = await fetch(`${origin}${path}`);
       const html = await response.text();
-
       expect(response.status).toBe(200);
-      expect(html).toContain("Synthetic demo");
-      expect(html).toContain("identity off-chain");
-      expect(html).toContain("Arbitrum Sepolia");
-      expect(html).toContain("Trusted component");
-      expect(html).toContain("Privacy");
-      expect(html).toContain("On-chain reward");
-      expect(html).toContain("Does not prove");
-      expect(html).not.toMatch(/0x[0-9a-f]{64}/i);
+      expect(html).toContain("Post-uniqueness credential demo");
+      expect(html).toContain("nav-secondary");
+      expect(html).not.toContain("Trusted component");
+      expect(html).not.toContain("Get credential");
     },
   );
 
@@ -112,13 +137,12 @@ describe("localhost demo HTTP boundary", () => {
           reject(new Error(`demo server exited early with code ${code ?? "unknown"}`));
         });
       });
-      const origin = /http:\/\/127\.0\.0\.1:\d+\/enroll/
-        .exec(startupLine)?.[0]
-        ?.replace(/\/enroll$/, "");
-      expect(origin).toBeTypeOf("string");
-      const response = await fetch(`${origin}/enroll`);
+      const matched = /http:\/\/127\.0\.0\.1:\d+\/?/.exec(startupLine)?.[0];
+      expect(matched).toBeTypeOf("string");
+      const origin = matched?.replace(/\/$/, "") ?? "";
+      const response = await fetch(`${origin}/`);
       expect(response.status).toBe(200);
-      expect(await response.text()).toContain("Synthetic demo");
+      expect(await response.text()).toContain("Post-uniqueness credential demo");
     } finally {
       child.kill();
       await new Promise<void>((resolve) => child.once("exit", () => resolve()));
